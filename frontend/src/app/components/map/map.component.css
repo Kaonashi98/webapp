@@ -4,6 +4,12 @@
   position: relative;
 }
 
+.return-btn {
+  background: linear-gradient(180deg, #edf4fc 0%, #e4edf8 100%);
+  color: #0f172a;
+}
+
+
 .map-layout,
 .zoom-layout {
   transition: opacity 0.22s ease, transform 0.22s ease;
@@ -48,6 +54,7 @@
 .plan-stage {
   position: relative;
   width: 100%;
+  height: fit-content;
   border: 1px solid #cfe1f5;
   border-radius: 14px;
   overflow: hidden;

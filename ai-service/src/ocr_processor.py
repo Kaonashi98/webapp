@@ -10,7 +10,7 @@ from PIL import Image
 from pdf2image import convert_from_bytes
 import fitz
 
-ROOM_REGEX = re.compile(r"\bA\d{1,3}\b", re.IGNORECASE)
+ROOM_REGEX = re.compile(r"\b[A-Z]+\d{1,3}\b", re.IGNORECASE)
 DESK_REGEX = re.compile(r"\b\d{1,3}\b")
 
 
