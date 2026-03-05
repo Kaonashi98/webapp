@@ -1,0 +1,59 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: deskbooking-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: deskbooking
+      POSTGRES_USER: deskbooking
+      POSTGRES_PASSWORD: deskbooking
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./docker/initdb/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U deskbooking -d deskbooking"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: deskbooking-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/deskbooking
+      SPRING_DATASOURCE_USERNAME: deskbooking
+      SPRING_DATASOURCE_PASSWORD: deskbooking
+      SPRING_PROFILES_ACTIVE: docker
+    ports:
+      - "8080:8080"
+    profiles: ["fullstack"]
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: deskbooking-frontend
+    depends_on:
+      - backend
+    ports:
+      - "4200:80"
+    profiles: ["fullstack"]
+
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: deskbooking-ai
+    ports:
+      - "8000:8000"
+    profiles: ["fullstack"]
+
+volumes:
+  pg_data:

@@ -1,0 +1,190 @@
+<div class="container">
+  <div class="card">
+    <div class="header-row">
+      <div>
+        <h2>Dashboard Prenotazioni</h2>
+        <p class="subtitle">Exprivia · Desk Booking</p>
+      </div>
+      <button class="secondary" (click)="logout()">Logout</button>
+    </div>
+
+    <p class="intro">Ciao {{ userName }}, seleziona una stanza e prenota una postazione per la giornata (09:00 - 18:00).</p>
+
+    <div class="admin-panel" *ngIf="userRole === 'ADMIN'">
+      <h3>Import Planimetria (Admin)</h3>
+      <div class="controls-row">
+        <label for="layoutFile">File planimetria</label>
+        <input id="layoutFile" type="file" accept=".pdf,.svg,.png,.jpg,.jpeg,.tif,.tiff" (change)="onLayoutFileSelected($event)" />
+        <button class="secondary" (click)="processLayoutFile()" [disabled]="importingLayout">Analizza file</button>
+        <button class="primary" (click)="importParsedLayout()" [disabled]="importingLayout || !parsedLayout.length">
+          Salva layout su DB
+        </button>
+      </div>
+
+      <p class="ok" *ngIf="ocrInfoMessage">{{ ocrInfoMessage }}</p>
+      <p class="error" *ngIf="ocrErrorMessage">{{ ocrErrorMessage }}</p>
+
+      <button
+        class="secondary"
+        *ngIf="parsedLayout.length && !showOcrPreview"
+        (click)="reopenOcrPreview()">
+        Apri riepilogo OCR
+      </button>
+
+      <div class="layout-preview-panel" *ngIf="showOcrPreview && parsedLayout.length">
+        <div class="layout-preview-header">
+          <strong>Riepilogo OCR planimetria</strong>
+          <button class="secondary preview-close" (click)="closeOcrPreview()">✕</button>
+        </div>
+        <div class="layout-preview">
+          <div class="layout-room" *ngFor="let room of parsedLayout">
+            <strong>{{ room.code }}</strong>
+            <span>{{ room.desks.length }} postazioni</span>
+            <small>{{ room.desks.join(', ') }}</small>
+          </div>
+        </div>
+      </div>
+
+      <h3>Planimetrie caricate</h3>
+      <div class="layout-assets" *ngIf="layoutAssets.length; else noLayouts">
+        <div class="layout-asset-item" *ngFor="let layout of layoutAssets">
+          <div>
+            <strong>{{ layout.filename }}</strong>
+            <small>ID: {{ layout.id }}</small>
+            <small>{{ layout.createdAt }}</small>
+            <small>{{ layout.sourceWidth }} x {{ layout.sourceHeight }}</small>
+          </div>
+          <div class="layout-asset-actions">
+            <span
+              class="active-layout-text"
+              *ngIf="layout.active; else activateLayoutButton">
+              Planimetria attiva
+            </span>
+            <ng-template #activateLayoutButton>
+              <button
+                class="secondary"
+                [disabled]="managingLayout"
+                (click)="activateLayout(layout.id)">
+                Rendi attiva
+              </button>
+            </ng-template>
+            <button
+              class="secondary danger"
+              [disabled]="managingLayout"
+              (click)="deleteLayout(layout.id)">
+              Elimina
+            </button>
+          </div>
+        </div>
+      </div>
+      <ng-template #noLayouts>
+        <p>Nessuna planimetria salvata.</p>
+      </ng-template>
+
+      <h3>Registra Dipendente (Admin)</h3>
+      <div class="employee-form">
+        <input type="text" [(ngModel)]="employeeCode" placeholder="Codice dipendente" />
+        <input type="text" [(ngModel)]="employeeName" placeholder="Nome completo" />
+        <input type="email" [(ngModel)]="employeeEmail" placeholder="Email aziendale" />
+        <input type="password" [(ngModel)]="employeePassword" placeholder="Password iniziale" />
+        <button class="primary" (click)="createEmployee()">Registra dipendente</button>
+      </div>
+      <p class="ok" *ngIf="employeeInfoMessage">{{ employeeInfoMessage }}</p>
+      <p class="error" *ngIf="employeeErrorMessage">{{ employeeErrorMessage }}</p>
+    </div>
+
+    <section class="workspace-grid">
+      <div class="workspace-main">
+        <section class="map-section">
+          <app-map
+            [rooms]="rooms"
+            [desks]="desks"
+            [selectedRoomCode]="selectedRoomCode"
+            [selectedDeskId]="selectedDeskId"
+            [planImageUrl]="planImageUrl"
+            [roomAnchors]="roomAnchors"
+            [deskAnchors]="deskAnchors"
+            [roomAvailability]="roomAvailabilityByCode"
+            [nonSelectableRooms]="nonSelectableRoomCodes"
+            [sourceWidth]="mapSourceWidth"
+            [sourceHeight]="mapSourceHeight"
+            (roomSelected)="onRoomSelected($event)"
+            (deskSelected)="onDeskSelected($event)"
+            (roomReset)="onRoomReset()">
+          </app-map>
+        </section>
+
+      </div>
+
+      <aside class="workspace-side">
+        <div class="controls-row side-controls">
+          <label for="bookingDate">Data prenotazione</label>
+          <input id="bookingDate" type="date" [min]="minBookingDate" [(ngModel)]="bookingDate" (change)="onBookingDateChange()" />
+          <button id="confirmBookingButton" class="primary" (click)="createBooking()">Conferma prenotazione</button>
+        </div>
+
+        <div id="bookingSummary" class="desk-selection-panel">
+          <strong *ngIf="selectedDeskId && selectedRoomCode; else noDeskSelection">
+            Postazione selezionata: {{ selectedRoomCode }}-{{ selectedDeskNumber }}
+          </strong>
+          <ng-template #noDeskSelection>
+            <strong>Seleziona una postazione sulla mappa</strong>
+          </ng-template>
+          <span class="hint">Data scelta: {{ formatDate(bookingDate) }}</span>
+          <span *ngIf="selectedDeskId && selectedRoomCode" [class.ok]="selectedDeskAvailable" [class.error]="!selectedDeskAvailable">
+            {{ selectedDeskAvailable ? 'Disponibile nella data selezionata' : 'Non disponibile nella data selezionata' }}
+          </span>
+          <span class="hint" *ngIf="selectedDeskId && selectedRoomCode">Conferma con il pulsante per completare la prenotazione.</span>
+        </div>
+
+        <p class="ok" *ngIf="infoMessage">{{ infoMessage }}</p>
+        <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+        <h3>Le mie prenotazioni future</h3>
+        <div class="bookings" *ngIf="futureBookings.length; else noFutureBookings">
+          <div
+            class="booking-item"
+            [id]="'future-booking-' + booking.id"
+            [class.latest-highlight]="booking.id === latestConfirmedBookingId"
+            [class.cancel-highlight]="booking.id === cancellingFutureBookingId"
+            *ngFor="let booking of futureBookings">
+            <div>
+              <strong>{{ formatDate(booking.bookingDate) }}</strong> - Stanza {{ booking.roomCode }} / Postazione {{ booking.deskNumber }}
+            </div>
+            <div class="booking-actions">
+              <span>{{ bookingStatusLabel(booking.status) }}</span>
+              <button
+                *ngIf="booking.status === 'CONFIRMED'"
+                class="secondary"
+                [disabled]="isDeletingBooking(booking.id)"
+                (click)="cancelBooking(booking.id)">
+                {{ isDeletingBooking(booking.id) ? 'Eliminazione...' : 'Elimina' }}
+              </button>
+            </div>
+          </div>
+        </div>
+        <ng-template #noFutureBookings>
+          <p>Nessuna prenotazione futura presente.</p>
+        </ng-template>
+
+        <h3>Le mie prenotazioni passate</h3>
+        <div class="bookings" *ngIf="pastBookings.length; else noPastBookings">
+          <div class="booking-item" *ngFor="let booking of pastBookings">
+            <div>
+              <strong>{{ formatDate(booking.bookingDate) }}</strong> - Stanza {{ booking.roomCode }} / Postazione {{ booking.deskNumber }}
+            </div>
+            <div class="booking-actions">
+              <span>{{ bookingStatusLabel(booking.status) }}</span>
+              <button class="secondary danger" [disabled]="isDeletingBooking(booking.id)" (click)="deletePastBooking(booking.id)">
+                {{ isDeletingBooking(booking.id) ? 'Eliminazione...' : 'Elimina' }}
+              </button>
+            </div>
+          </div>
+        </div>
+        <ng-template #noPastBookings>
+          <p>Nessuna prenotazione passata presente.</p>
+        </ng-template>
+      </aside>
+    </section>
+  </div>
+</div>

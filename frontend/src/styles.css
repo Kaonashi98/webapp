@@ -1,0 +1,74 @@
+* {
+  box-sizing: border-box;
+  font-family: "Segoe UI", Arial, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(circle at top, #f8fbff 0%, #edf3fb 42%, #e7eff9 100%);
+  color: #1f2937;
+}
+
+.container {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 10px 12px;
+}
+
+.card {
+  background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+  border-radius: 16px;
+  border: 1px solid #d9e8f8;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  padding: 14px;
+}
+
+h1, h2, h3 {
+  margin-top: 0;
+  letter-spacing: 0.2px;
+}
+
+button {
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+}
+
+button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.12);
+  filter: brightness(1.01);
+}
+
+button:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.72;
+  transform: none;
+  box-shadow: none;
+  filter: none;
+}
+
+button.primary {
+  background: linear-gradient(180deg, #0062bf 0%, #0057a8 100%);
+  color: #fff;
+}
+
+button.secondary {
+  background: linear-gradient(180deg, #edf4fc 0%, #e4edf8 100%);
+  color: #0f172a;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

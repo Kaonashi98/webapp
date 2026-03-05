@@ -1,0 +1,83 @@
+<div class="plan-wrapper" *ngIf="hasInteractivePlan; else emptyPlanState">
+  <div class="map-layout" [class.view-switching]="isViewTransitioning" *ngIf="!selectedRoomCode; else planRoomZoom">
+    <h3>Planimetria Interattiva</h3>
+    <div class="room-legend">
+      <span class="legend-item"><i class="dot room-free"></i>Tutti liberi</span>
+      <span class="legend-item"><i class="dot room-mixed"></i>Parzialmente occupata</span>
+      <span class="legend-item"><i class="dot room-full"></i>Completa</span>
+    </div>
+    <div class="plan-stage" [style.aspectRatio]="sourceWidth + ' / ' + sourceHeight">
+      <div class="overview-scene" [ngStyle]="overviewTransformStyle">
+        <img class="plan-image" [src]="planImageUrl!" alt="Planimetria ufficio" />
+
+        <button
+          type="button"
+          class="room-marker"
+          *ngFor="let room of visibleRoomAnchors"
+          [ngClass]="roomStatusClass(room.code)"
+          [style.left.%]="(room.x / sourceWidth) * 100"
+          [style.top.%]="(room.y / sourceHeight) * 100"
+          (pointerdown)="onRoomPointerDown(room.code, $event)">
+          {{ room.code }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <ng-template #planRoomZoom>
+    <div class="zoom-layout" [class.view-switching]="isViewTransitioning">
+      <div class="zoom-header">
+        <h3>Stanza {{ selectedRoomCode }}</h3>
+        <button class="secondary" (click)="reset()">Torna alla mappa</button>
+      </div>
+
+      <div class="legend">
+        <span class="legend-item"><i class="dot available"></i>Disponibile</span>
+        <span class="legend-item"><i class="dot unavailable"></i>Prenotata</span>
+        <span class="legend-item"><i class="dot selected"></i>Selezionata</span>
+      </div>
+
+      <p class="focus-note">Vista focalizzata sulla stanza selezionata.</p>
+
+      <div class="plan-stage" [style.aspectRatio]="sourceWidth + ' / ' + sourceHeight">
+        <div class="zoom-scene" [ngStyle]="zoomTransformStyle">
+          <img class="plan-image" [src]="planImageUrl!" alt="Planimetria stanza" />
+
+          <button
+            type="button"
+            class="desk-marker"
+            *ngFor="let anchor of visibleDeskAnchors"
+            [class.selected]="anchor.desk?.id === selectedDeskId"
+            [class.unavailable]="!anchor.desk || !anchor.desk.available"
+            [style.left.%]="(anchor.x / sourceWidth) * 100"
+            [style.top.%]="(anchor.y / sourceHeight) * 100"
+            [style.transform]="deskMarkerTransform"
+            [attr.title]="!anchor.desk?.available ? ('Prenotata da: ' + (anchor.desk?.bookedBy || 'Dipendente non disponibile')) : null"
+            (click)="selectDeskFromAnchor(anchor)">
+            {{ anchor.deskNumber }}
+          </button>
+        </div>
+      </div>
+
+      <div class="occupied-desks" *ngIf="occupiedDeskInfos.length">
+        <strong>Postazioni già prenotate (data selezionata)</strong>
+        <div class="occupied-grid">
+          <span *ngFor="let item of occupiedDeskInfos">{{ item.deskNumber }} · {{ item.employee }}</span>
+        </div>
+      </div>
+
+      <p *ngIf="selectedDeskNumber">Postazione selezionata: <strong>{{ selectedRoomCode }}-{{ selectedDeskNumber }}</strong></p>
+    </div>
+  </ng-template>
+
+  <div class="view-transition-overlay" *ngIf="isViewTransitioning">
+    <span>Caricamento stanza...</span>
+  </div>
+</div>
+
+<ng-template #emptyPlanState>
+  <div class="empty-plan">
+    <h3>Planimetria non disponibile</h3>
+    <p>L'admin deve importare una planimetria con OCR per abilitare la vista interattiva completa.</p>
+  </div>
+</ng-template>

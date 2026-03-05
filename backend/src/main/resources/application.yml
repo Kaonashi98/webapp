@@ -1,0 +1,42 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: desk-booking-backend
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 25MB
+  datasource:
+    url: jdbc:postgresql://localhost:5432/deskbooking
+    username: deskbooking
+    password: deskbooking
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: false
+
+app:
+  jwt:
+    secret: 6f45f550f491d5f0a2f6b8e4338da1f38f65ca734b640283f02054288f88c5cf
+    expiration-minutes: 480
+  cors:
+    allowed-origin: http://localhost:4200
+
+---
+spring:
+  config:
+    activate:
+      on-profile: docker
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 25MB
+  datasource:
+    url: jdbc:postgresql://postgres:5432/deskbooking
+    username: deskbooking
+    password: deskbooking

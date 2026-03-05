@@ -1,0 +1,31 @@
+<div class="container">
+  <div class="card login-card">
+    <h1>Exprivia Desk Booking</h1>
+    <p>Sede Roma Bufalotta</p>
+
+    <div class="mode-switch">
+      <button class="secondary" (click)="toggleMode('login')" [class.active]="mode === 'login'">Login</button>
+      <button class="secondary" (click)="toggleMode('register')" [class.active]="mode === 'register'">Registrati</button>
+    </div>
+
+    <ng-container *ngIf="mode === 'register'">
+      <label>Codice Dipendente</label>
+      <input [(ngModel)]="employeeCode" type="text" placeholder="EMP001" />
+
+      <label>Nome Completo</label>
+      <input [(ngModel)]="fullName" type="text" placeholder="Mario Rossi" />
+    </ng-container>
+
+    <label>Email</label>
+    <input [(ngModel)]="email" type="email" placeholder="nome.cognome@exprivia.com" />
+
+    <label>Password</label>
+    <input [(ngModel)]="password" type="password" placeholder="••••••••" />
+
+    <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+    <button class="primary" (click)="login()" [disabled]="loading">
+      {{ mode === 'login' ? 'Accedi' : 'Crea account' }}
+    </button>
+  </div>
+</div>
