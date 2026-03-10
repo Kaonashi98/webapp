@@ -51,8 +51,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
   currentLayoutId: string | null = null;
   layoutAssets: LayoutAdminItemDto[] = [];
   managingLayout = false;
+
+  //TEMPORANEO!!!! L'unico modo per il momento, dobbiamo trovare una soluzione piu' scalabile. - Daniele
   readonly nonSelectableRoomCodes = ['A1', 'A19', 'A23'];
   private readonly deskRoomOverrides: Record<number, string> = {
+    12: 'A20',
+    13: 'A20',
+    27: 'A26',
     18: 'B4',
     43: 'A6',
     44: 'A6',

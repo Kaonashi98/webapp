@@ -147,9 +147,11 @@ def _extract_tokens_from_svg(content: bytes) -> tuple[List[OcrToken], int, int]:
     except Exception:
         return [], 816, 1056
 
-    source_width, source_height = _extract_svg_dimensions(root)
+    parent_map = {c: p for p in root.iter() for c in p}
 
+    source_width, source_height = _extract_svg_dimensions(root)
     tokens: List[OcrToken] = []
+
     for element in root.iter():
         tag_name = element.tag.lower()
         if not tag_name.endswith("text"):
@@ -159,7 +161,20 @@ def _extract_tokens_from_svg(content: bytes) -> tuple[List[OcrToken], int, int]:
         if not text:
             continue
 
-        a, b, c, d, e, f = _extract_transform_matrix(element.attrib.get("transform"))
+        a, b, c, d, e, f = 1.0, 0.0, 0.0, 1.0, 0.0, 0.0
+        current = element
+        while current is not None:
+            transform = current.attrib.get("transform")
+            if transform:
+                m = _extract_transform_matrix(transform)
+                na = m[0]*a + m[1]*c
+                nb = m[0]*b + m[1]*d
+                nc = m[2]*a + m[3]*c
+                nd = m[2]*b + m[3]*d
+                ne = m[0]*e + m[1]*f + m[4]
+                nf = m[2]*e + m[3]*f + m[5]
+                a, b, c, d, e, f = na, nb, nc, nd, ne, nf
+            current = parent_map.get(current)
 
         tspan = None
         for child in element:
@@ -167,11 +182,11 @@ def _extract_tokens_from_svg(content: bytes) -> tuple[List[OcrToken], int, int]:
                 tspan = child
                 break
 
-        span_x = _parse_numeric_attr(tspan.attrib.get("x")) if tspan is not None else 0
-        span_y = _parse_numeric_attr(tspan.attrib.get("y")) if tspan is not None else 0
+        span_x = _parse_numeric_attr(tspan.attrib.get("x")) if tspan else 0
+        span_y = _parse_numeric_attr(tspan.attrib.get("y")) if tspan else 0
 
-        left = int(e + a * span_x + c * span_y)
-        top = int(f + b * span_x + d * span_y)
+        left = int(a * span_x + c * span_y + e)
+        top = int(b * span_x + d * span_y + f)
 
         tokens.append(
             OcrToken(
