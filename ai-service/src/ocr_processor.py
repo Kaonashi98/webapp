@@ -154,7 +154,11 @@ def _extract_tokens_from_svg(content: bytes) -> tuple[List[OcrToken], int, int]:
 
     for element in root.iter():
         tag_name = element.tag.lower()
-        if not tag_name.endswith("text"):
+        # Handle namespace in tag name (e.g., {http://www.w3.org/2000/svg}text)
+        if '}' in tag_name:
+            tag_name = tag_name.split('}', 1)[1].lower()
+        
+        if tag_name != "text":
             continue
 
         text = "".join(element.itertext()).strip()
@@ -176,14 +180,41 @@ def _extract_tokens_from_svg(content: bytes) -> tuple[List[OcrToken], int, int]:
                 a, b, c, d, e, f = na, nb, nc, nd, ne, nf
             current = parent_map.get(current)
 
+        # Try to extract coordinates: first from tspan, then from text element
+        span_x = None
+        span_y = None
         tspan = None
         for child in element:
-            if str(child.tag).lower().endswith("tspan"):
+            child_tag = str(child.tag).lower()
+            if '}' in child_tag:
+                child_tag = child_tag.split('}', 1)[1].lower()
+            if child_tag == "tspan":
                 tspan = child
                 break
 
-        span_x = _parse_numeric_attr(tspan.attrib.get("x")) if tspan else 0
-        span_y = _parse_numeric_attr(tspan.attrib.get("y")) if tspan else 0
+        # Try tspan first
+        if tspan is not None:
+            x_attr = tspan.attrib.get("x")
+            y_attr = tspan.attrib.get("y")
+            if x_attr is not None:
+                span_x = _parse_numeric_attr(x_attr)
+            if y_attr is not None:
+                span_y = _parse_numeric_attr(y_attr)
+        
+        # Fall back to text element if coordinates not found in tspan
+        if span_x is None:
+            x_attr = element.attrib.get("x")
+            if x_attr is not None:
+                span_x = _parse_numeric_attr(x_attr)
+        
+        if span_y is None:
+            y_attr = element.attrib.get("y")
+            if y_attr is not None:
+                span_y = _parse_numeric_attr(y_attr)
+        
+        # Default to 0 if still not found
+        span_x = span_x if span_x is not None else 0
+        span_y = span_y if span_y is not None else 0
 
         left = int(a * span_x + c * span_y + e)
         top = int(b * span_x + d * span_y + f)

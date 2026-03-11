@@ -52,23 +52,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   layoutAssets: LayoutAdminItemDto[] = [];
   managingLayout = false;
 
-  //TEMPORANEO!!!! L'unico modo per il momento, dobbiamo trovare una soluzione piu' scalabile. - Daniele
-  readonly nonSelectableRoomCodes = ['A1', 'A19', 'A23'];
-  private readonly deskRoomOverrides: Record<number, string> = {
-    12: 'A20',
-    13: 'A20',
-    27: 'A26',
-    18: 'B4',
-    43: 'A6',
-    44: 'A6',
-    45: 'A6'
-  };
-  private readonly roomDeskWhitelist: Record<string, number[]> = {
-    A18: [15, 16, 17],
-    B4: [18],
-    A5: [41, 42],
-    A6: [43, 44, 45]
-  };
   selectedDeskAvailable = false;
   selectedDeskNumber: number | null = null;
   employeeCode = '';
@@ -208,9 +191,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   onRoomSelected(roomCode: string): void {
-    if (this.nonSelectableRoomCodes.includes(roomCode.toUpperCase())) {
-      return;
-    }
     this.selectedRoomCode = roomCode;
     this.selectedDeskId = null;
     this.infoMessage = '';
@@ -663,15 +643,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   private resolveDeskRoomCode(deskNumber: number, roomCode: string): string {
-    return this.deskRoomOverrides[deskNumber] ?? roomCode.toUpperCase();
+    return roomCode.toUpperCase();
   }
 
   private applyRoomDeskWhitelist(roomCode: string, desks: DeskView[]): DeskView[] {
-    const whitelist = this.roomDeskWhitelist[roomCode.toUpperCase()];
-    if (!whitelist?.length) {
-      return desks;
-    }
-    return desks.filter((desk) => whitelist.includes(desk.deskNumber));
+    return desks;
   }
 
   private findNearestRoom(desk: OcrTokenDto & { deskNumber: number }, rooms: OcrTokenDto[]): OcrTokenDto | null {
